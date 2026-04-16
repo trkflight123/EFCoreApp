@@ -76,23 +76,41 @@ namespace EFCoreApp
         {
             using var dbContext = new AppDbContext();
 
-            if (string.IsNullOrEmpty(txtId.Text.Trim()))
+            // 1. Validate Input
+            if (string.IsNullOrEmpty(txtId.Text.Trim()) || !Guid.TryParse(txtId.Text.Trim(), out Guid categoryId))
             {
-                MessageBox.Show("Please enter a valid category ID");
+                MessageBox.Show("Please select or enter a valid Category ID.");
                 return;
             }
 
-            Guid categoryId = Guid.Parse(txtId.Text.Trim());
+            // 2. Find the Record
             var category = dbContext.Categories.Find(categoryId);
 
             if (category != null)
             {
-                MessageBox.Show("Category deleted successfully!");
-                return;
-            }
+                // 3. Ask for confirmation
+                var result = MessageBox.Show($"Are you sure you want to delete '{category.Name}'?",
+                                           "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
 
-            dbContext.Categories.Remove(category);
-            dbContext.SaveChanges();
+                if (result == DialogResult.Yes)
+                {
+                    // 4. Perform Delete
+                    dbContext.Categories.Remove(category);
+                    dbContext.SaveChanges();
+
+                    MessageBox.Show("Category deleted successfully!");
+
+                    // 5. Refresh UI
+                    GetCategories();
+                    txtId.Clear();
+                    txtName.Clear();
+                    txtDescription.Clear();
+                }
+            }
+            else
+            {
+                MessageBox.Show("Category not found in the database.");
+            }
         }
 
         private void dataGridView1_CellClick(object sender, DataGridViewCellEventArgs e)
